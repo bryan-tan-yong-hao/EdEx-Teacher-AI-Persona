@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Teacher Persona Quiz</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; line-height: 1.6; }
+        #quiz-app { background: var(--card); max-width: 650px; width: 100%; padding: 40px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        h1 { font-size: 1.8rem; margin-bottom: 10px; color: var(--primary); text-align: center; }
+        h2 { text-align: center; color: #4b5563; font-size: 1.3rem;}
+        h3 { color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px;}
+        .progress { font-size: 0.9rem; color: #6b7280; margin-bottom: 20px; text-align: center; }
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 25px; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background: #fff; border: 2px solid #e5e7eb; padding: 15px 20px; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s; font-size: 1rem; }
+        .option-btn:hover { border-color: var(--primary); background: #eff6ff; }
+        .result-card { text-align: left; }
+        .persona-visual { text-align: center; margin: 20px 0; font-weight: bold; color: #6b7280; border: 2px dashed #ccc; padding: 20px; border-radius: 8px;} /* Placeholder style */
+        .persona-title { font-size: 2.2rem; color: var(--primary); margin: 10px 0; text-align: center; font-weight: 800;}
+        .superpower { background: #eff6ff; border-left: 4px solid var(--primary); padding: 15px; margin: 20px 0; border-radius: 4px;}
+        .superpower strong { color: var(--primary); }
+        .use-case-list { margin-left: 20px; }
+        .use-case-list li { margin-bottom: 8px; }
+        .summary-section { margin-top: 50px; border-top: 2px solid #eee; padding-top: 20px; text-align: left; }
+        .summary-item { margin-bottom: 20px; font-size: 0.95rem; background: #f9fafb; padding: 15px; border-radius: 8px;}
+        .summary-q { font-weight: bold; display: block; margin-bottom: 5px;}
+        .summary-a { color: #4b5563; font-style: italic; padding-left: 10px; border-left: 2px solid #ddd;}
+        button.restart { margin-top: 30px; background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; font-size: 1.1rem;}
+    </style>
+</head>
+<body>
+
+<div id="quiz-app">
+    <div id="intro">
+        <h1>Which AI Teacher Are You?</h1>
+        <p style="text-align: center;">Answer 6 quick questions to discover your dominant AI educator persona for the Singapore classroom.</p>
+        <div style="text-align: center;"><button class="restart" onclick="startQuiz()">Start Quiz</button></div>
+    </div>
+
+    <div id="quiz" class="hidden">
+        <div class="progress" id="progress">Question 1 of 6</div>
+        <div class="question-text" id="question">Question goes here?</div>
+        <div class="options" id="options"></div>
+    </div>
+
+    <div id="result" class="hidden">
+        <div class="result-card">
+            <h2>AI Teacher Persona Results</h2>
+            <div class="persona-visual" id="persona-shape-placeholder">[IMAGE PLACEHOLDER: SHAPE]</div>
+            <h2>You are the</h2>
+            <div class="persona-title" id="persona-display">Persona Name</div>
+            
+            <p id="persona-desc"></p>
+
+            <div class="superpower">
+                <strong>Your superpower:</strong> <span id="persona-superpower"></span>
+            </div>
+
+            <h3>You typically use AI for...</h3>
+            <ul class="use-case-list" id="persona-use-cases">
+                </ul>
+
+            <button class="restart" onclick="location.reload()">Retake Quiz</button>
+        </div>
+
+        <div class="summary-section">
+            <h3>Your Response Summary</h3>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ** QUIZ DATA & QUESTIONS **
+    const quizData = [
+        {
+            q: "When you first start planning a lesson using AI, what do you usually do?",
+            options: [
+                { text: "I start by crafting a good prompt to help AI generate ideas for my lesson.", persona: "Prompt Whisperer" },
+                { text: "I ask AI to generate worksheets, examples, or teaching materials for the topic.", persona: "Content Alchemist" },
+                { text: "I think about how students themselves could interact with AI during the lesson.", persona: "Classroom Conductor" },
+                { text: "I look at past student mistakes and ask AI how I could address those misconceptions.", persona: "Feedback Detective" },
+                { text: "I reflect on how my previous lesson went and ask AI how it could be improved.", persona: "Lesson Hacker" }
+            ]
+        },
+        {
+            q: "You discover a new AI tool designed for education. What is the first thing you want to try?",
+            options: [
+                { text: "Experiment with different prompts to see what kind of responses the AI gives.", persona: "Prompt Whisperer" },
+                { text: "Use it to quickly generate resources like quizzes or case studies.", persona: "Content Alchemist" },
+                { text: "Design an activity where students can use the AI to explore ideas.", persona: "Classroom Conductor" },
+                { text: "See whether it can help analyse student responses or give feedback.", persona: "Feedback Detective" },
+                { text: "Ask it how it could help improve or redesign one of my existing lessons.", persona: "Lesson Hacker" }
+            ]
+        },
+        {
+            q: "During a lesson, students seem stuck on a difficult concept. How might AI help?",
+            options: [
+                { text: "I quickly prompt AI to generate a clearer explanation or example.", persona: "Prompt Whisperer" },
+                { text: "I ask AI to produce a quick practice question or example for students.", persona: "Content Alchemist" },
+                { text: "I let students ask the AI questions to help them explore the concept further.", persona: "Classroom Conductor" },
+                { text: "I ask AI to help identify the misconception students might have.", persona: "Feedback Detective" },
+                { text: "I make a mental note and later use AI to rethink how I teach this concept next time.", persona: "Lesson Hacker" }
+            ]
+        },
+        {
+            q: "After students submit their work, how are you most likely to use AI?",
+            options: [
+                { text: "I ask AI how I could better phrase the instructions or prompts next time.", persona: "Prompt Whisperer" },
+                { text: "I use AI to help generate additional practice questions for students.", persona: "Content Alchemist" },
+                { text: "I design a follow-up activity where students can discuss their answers with AI.", persona: "Classroom Conductor" },
+                { text: "I use AI to help analyse patterns in student responses and identify misconceptions.", persona: "Feedback Detective" },
+                { text: "I use AI to reflect on the lesson and think about improvements for the next round.", persona: "Lesson Hacker" }
+            ]
+        },
+        {
+            q: "When colleagues talk about using AI in teaching, which idea excites you most?",
+            options: [
+                { text: "Learning how to write better prompts to get more useful responses.", persona: "Prompt Whisperer" },
+                { text: "Using AI to create high-quality teaching materials quickly.", persona: "Content Alchemist" },
+                { text: "Finding ways for students to use AI to support their own learning.", persona: "Classroom Conductor" },
+                { text: "Using AI to better understand student learning and give feedback.", persona: "Feedback Detective" },
+                { text: "Using AI to help refine and improve lesson design over time.", persona: "Lesson Hacker" }
+            ]
+        },
+        {
+            q: "If you had 10 minutes to experiment with AI before your next lesson, what would you most likely do?",
+            options: [
+                { text: "Try different prompts to see which ones produce the best teaching ideas.", persona: "Prompt Whisperer" },
+                { text: "Generate a worksheet, example set, or activity for the lesson.", persona: "Content Alchemist" },
+                { text: "Create a short activity where students can explore a topic with AI.", persona: "Classroom Conductor" },
+                { text: "Analyse sample student answers with AI to identify misconceptions.", persona: "Feedback Detective" },
+                { text: "Ask AI to review my lesson plan and suggest improvements.", persona: "Lesson Hacker" }
+            ]
+        }
+    ];
+
+    // ** PERSONA DEFINITIONS (UPDATED WITH YOUR TEXT) **
+    const personaDetails = {
+        "Prompt Whisperer": {
+            desc: "You know that good AI output often starts with a good prompt. You use AI as a thinking partner to brainstorm, refine explanations, and sharpen lesson ideas before teaching begins.",
+            superpower: "Turning simple prompts into powerful teaching ideas.",
+            useCases: [
+                "Brainstorming lesson directions",
+                "Refining explanations and examples",
+                "Generating strong question stems",
+                "Exploring multiple ways to frame a concept"
+            ]
+        },
+        "Content Alchemist": {
+            desc: "You turn ideas into engaging and ready-to-use learning materials. You use AI to generate worksheets, examples, and tasks that help bring content to life and make learning more accessible for students.",
+            superpower: "Transforming ideas into practical, classroom-ready resources.",
+            useCases: [
+                "Creating worksheets and practice questions",
+                "Generating examples and case studies",
+                "Adapting materials for different student needs",
+                "Designing engaging learning tasks"
+            ]
+        },
+        "Classroom Conductor": {
+            desc: "You bring AI into the learning experience itself. You design opportunities for students to interact with AI, explore ideas, and construct understanding, making learning more active and student-driven.",
+            superpower: "Orchestrating meaningful learning experiences with AI.",
+            useCases: [
+                "Supporting student inquiry and exploration",
+                "Designing AI-assisted classroom activities",
+                "Facilitating discussions and idea generation",
+                "Encouraging reflection and deeper thinking"
+            ]
+        },
+        "Feedback Detective": {
+            desc: "You use AI to uncover insights about student learning. You look for patterns, identify misconceptions, and use AI to support targeted feedback that helps students improve.",
+            superpower: "Turning student responses into actionable learning insights.",
+            useCases: [
+                "Analysing student work and responses",
+                "Identifying misconceptions and learning gaps",
+                "Supporting feedback generation",
+                "Informing next instructional steps"
+            ]
+        },
+        "Lesson Hacker": {
+            desc: "You are constantly refining and improving your teaching. You use AI to reflect on lessons, redesign activities, and explore better ways to support student learning.",
+            superpower: "Continuously improving teaching through iteration and reflection.",
+            useCases: [
+                "Reviewing lesson effectiveness",
+                "Improving explanations and lesson flow",
+                "Redesigning activities for better engagement",
+                "Exploring alternative teaching approaches"
+            ]
+        }
+    };
+
+    // ** QUIZ LOGIC **
+    let currentQuestion = 0;
+    let scores = {};
+    let userAnswers = [];
+
+    function startQuiz() {
+        document.getElementById('intro').classList.add('hidden');
+        document.getElementById('quiz').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = quizData[currentQuestion];
+        document.getElementById('progress').innerText = `Question ${currentQuestion + 1} of ${quizData.length}`;
+        document.getElementById('question').innerText = q.q;
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = '';
+
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => handleAnswer(opt.persona, opt.text);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(persona, text) {
+        scores[persona] = (scores[persona] || 0) + 1;
+        userAnswers.push({ q: quizData[currentQuestion].q, a: text });
+        
+        currentQuestion++;
+        if (currentQuestion < quizData.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz').classList.add('hidden');
+        document.getElementById('result').classList.remove('hidden');
+
+        // Calculate Winner (handling ties by picking the first one)
+        const winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+        const details = personaDetails[winner];
+
+        // Populate Result Card
+        document.getElementById('persona-display').innerText = winner;
+        document.getElementById('persona-desc').innerText = details.desc;
+        document.getElementById('persona-superpower').innerText = details.superpower;
+
+        // Populate Use Cases
+        const useCasesUl = document.getElementById('persona-use-cases');
+        useCasesUl.innerHTML = '';
+        details.useCases.forEach(uc => {
+            const li = document.createElement('li');
+            li.innerText = uc;
+            useCasesUl.appendChild(li);
+        });
+
+        // Generate Summary (Questions and Answers)
+        const summaryDiv = document.getElementById('summary-content');
+        summaryDiv.innerHTML = ''; // Clear existing
+        userAnswers.forEach((ans, index) => {
+            const item = document.createElement('div');
+            item.className = 'summary-item';
+            item.innerHTML = `<span class="summary-q">Q${index+1}: ${ans.q}</span><span class="summary-a">Your choice: ${ans.a}</span>`;
+            summaryDiv.appendChild(item);
+        });
+    }
+</script>
+
+</body>
+</html>
+
+http://googleusercontent.com/immersive_entry_chip/0
